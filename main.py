@@ -32,7 +32,12 @@ ips_data = asyncio.run(fetch_all_ips(ips))
 coord_data = [np.array(item['loc'].split(','), dtype=np.float64) for item in ips_data]
 
 mymap = folium.Map(location=[20.0, 0.0], zoom_start=2, max_zoom=1)
-folium.plugins.HeatMap(coord_data).add_to(mymap)
 folium.TileLayer('cartodbdark_matter').add_to(mymap)
+folium.plugins.HeatMap(coord_data).add_to(mymap)
+folium.plugins.MarkerCluster(
+    coord_data,
+    show_coverage_on_hover=False,
+    spiderfy_distance_multiplier=0
+).add_to(mymap)
 
 mymap.save('ip_heatmap.html')
