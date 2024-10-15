@@ -10,10 +10,10 @@ import requests
 
 # read data source file
 with open('ips.txt', 'r') as f:
-    data = f.read()
+    logs = f.read()
 
 pattern_ipv4 = r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
-ips = re.findall(pattern_ipv4, data)
+ips = re.findall(pattern_ipv4, logs)
 ips = list(set(ips))
 
 def fetch_from_ipinfo():
@@ -29,6 +29,7 @@ def fetch_from_ipinfo():
 
     # fetch ip data
     data = asyncio.run(fetch_all_ips(ips))
+    return data
 
 
 def fetch_from_ipapis():
@@ -44,22 +45,12 @@ def fetch_from_ipapis():
         for ip in response_.keys():
             if isinstance(response_[ip], dict):
                 data.append(response_[ip])
+    return data
 
+
+data = fetch_from_ipapis()
+for item in data:
+    item.pop('ip', None)
 
 with open('data.json', 'w') as f:
     json.dump(data, f)
-
-# map
-coord_data = [np.array(item['loc'].split(','), dtype=np.float64) for item in data]
-coord_data = [(item['location']['latitude'], item['location']['longitude']) for item in data]
-
-mymap = folium.Map(location=[20.0, 0.0], zoom_start=2, max_zoom=1)
-folium.TileLayer('cartodbdark_matter').add_to(mymap)
-folium.plugins.HeatMap(coord_data).add_to(mymap)
-folium.plugins.MarkerCluster(
-    coord_data,
-    show_coverage_on_hover=False,
-    spiderfy_distance_multiplier=0
-).add_to(mymap)
-
-mymap.save('ip_heatmap.html')
